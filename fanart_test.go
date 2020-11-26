@@ -1,6 +1,7 @@
 package fanart_test
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -10,6 +11,8 @@ import (
 
 	"github.com/msawangwan/fanart"
 )
+
+const VERBOSE = false
 
 var (
 	mockConfig = strings.NewReader(`{
@@ -30,7 +33,9 @@ func pretty(t *testing.T, o interface{}) {
 		t.Fatal(err)
 	}
 
-	t.Logf(string(raw))
+	if VERBOSE {
+		t.Logf(string(raw))
+	}
 }
 
 func TestCreateClient(t *testing.T) {
@@ -71,12 +76,16 @@ func TestGetMovieArtResponseRaw(t *testing.T) {
 	}{
 		{"imdbId/hook", fanart.MovieRequest{MovieID: "tt0102057"}},
 		{"imdbId/gone_with_the_wind", fanart.MovieRequest{MovieID: "tt0031381"}},
+		{"imdbId/no_such_resource", fanart.MovieRequest{MovieID: "tt3097934"}},
 	}
 
 	for _, testcase := range testcases {
 		t.Run(testcase.label, func(tt *testing.T) {
 			res, err := client.MovieImagesRaw(testcase.req)
 			if err != nil {
+				if errors.Is(err, fanart.ErrNoSuchResource) {
+					return
+				}
 				t.Error(err)
 			}
 
@@ -86,7 +95,9 @@ func TestGetMovieArtResponseRaw(t *testing.T) {
 				t.Error(err)
 			}
 
-			pretty(t, o)
+			if VERBOSE {
+				pretty(t, o)
+			}
 		})
 	}
 }
@@ -120,16 +131,22 @@ func TestGetMovieArtResponse(t *testing.T) {
 	}{
 		{"imdbId/hook", fanart.MovieRequest{MovieID: "tt0102057"}},
 		{"imdbId/gone_with_the_wind", fanart.MovieRequest{MovieID: "tt0031381"}},
+		{"imdbId/no_such_resource", fanart.MovieRequest{MovieID: "tt3097934"}},
 	}
 
 	for _, testcase := range testcases {
 		t.Run(testcase.label, func(tt *testing.T) {
 			res, err := client.MovieImages(testcase.req)
 			if err != nil {
+				if errors.Is(err, fanart.ErrNoSuchResource) {
+					return
+				}
 				t.Error(err)
 			}
 
-			pretty(t, res)
+			if VERBOSE {
+				pretty(t, res)
+			}
 		})
 	}
 }

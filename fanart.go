@@ -10,6 +10,36 @@ import (
 	"time"
 )
 
+// NoSuchResourceError is returned when an error is returned from the fanart API.
+type NoSuchResourceError struct {
+	ResourceID string `json:"resourceID,omitempty"`
+	StatusCode int    `json:"statusCode,omitempty"`
+}
+
+func newNoSuchResourceError(resourceID string, statusCode int) *NoSuchResourceError {
+	return &NoSuchResourceError{ResourceID: resourceID, StatusCode: statusCode}
+}
+
+// Is implements the Error interface.
+func (e *NoSuchResourceError) Is(target error) bool {
+	return e.Error() == target.Error()
+}
+
+// As implements the Error interface.
+func (e *NoSuchResourceError) As(target error) bool {
+	return e.Error() == target.Error()
+}
+
+// Error implements the Error interface.
+func (e *NoSuchResourceError) Error() string {
+	return fmt.Sprintf("no such resource: %d", e.StatusCode)
+}
+
+// Exported errors.
+var (
+	ErrNoSuchResource = newNoSuchResourceError("", 404)
+)
+
 // MovieRequest contains the parameters to an API request.
 type MovieRequest struct {
 	MovieID string `json:"MovieID,omitempty"`
@@ -98,6 +128,10 @@ func (client *APIClient) MovieImagesRaw(payload MovieRequest) ([]byte, error) {
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
+	}
+
+	if res.StatusCode >= 400 {
+		return nil, newNoSuchResourceError(payload.MovieID, res.StatusCode)
 	}
 
 	data, err := ioutil.ReadAll(res.Body)

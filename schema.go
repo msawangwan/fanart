@@ -31,3 +31,9 @@ type MovieResponse struct {
 	MovieBanner     []ImageResponse `json:"moviebanner,omitempty"`
 	MovieThumb      []ImageResponse `json:"moviethumb,omitempty"`
 }
+
+// NotFoundResponse represents a resource not found error.
+type NotFoundResponse struct {
+	ErrorMessage *string
+	Status       *string
+}
